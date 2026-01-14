@@ -10,3 +10,11 @@ build
 # IntelliJ IDEA
 .idea
 *.iml
+secrets.sh
+secrets.ps1
+gradle.properties
+
+# Keystore
+app/my-release-key.jks
+# Java heap dumps (out of memory errors)
+*.hprof

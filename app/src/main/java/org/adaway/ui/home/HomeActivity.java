@@ -42,6 +42,7 @@ import org.adaway.helper.PreferenceHelper;
 import org.adaway.helper.ThemeHelper;
 import org.adaway.model.adblocking.AdBlockMethod;
 import org.adaway.model.error.HostError;
+import org.adaway.model.vpn.VpnStatistics;
 import org.adaway.ui.help.HelpActivity;
 import org.adaway.ui.hosts.HostsSourcesActivity;
 import org.adaway.ui.lists.ListsActivity;
@@ -88,6 +89,7 @@ public class HomeActivity extends AppCompatActivity {
         bindAppVersion();
         bindHostCounter();
         bindSourceCounter();
+        bindStatistics();
         bindPending();
         bindState();
         bindClickListeners();
@@ -161,8 +163,7 @@ public class HomeActivity extends AppCompatActivity {
                         versionTextView.setTypeface(versionTextView.getTypeface(), Typeface.BOLD);
                         versionTextView.setText(R.string.update_available);
                     }
-                }
-        );
+                });
     }
 
     private void bindHostCounter() {
@@ -186,15 +187,13 @@ public class HomeActivity extends AppCompatActivity {
 
         TextView upToDateSourcesTextView = this.binding.content.upToDateSourcesTextView;
         LiveData<Integer> upToDateSourceCount = this.homeViewModel.getUpToDateSourceCount();
-        upToDateSourceCount.observe(this, count ->
-                upToDateSourcesTextView.setText(resources.getQuantityString(R.plurals.up_to_date_source_label, count, count))
-        );
+        upToDateSourceCount.observe(this, count -> upToDateSourcesTextView
+                .setText(resources.getQuantityString(R.plurals.up_to_date_source_label, count, count)));
 
         TextView outdatedSourcesTextView = this.binding.content.outdatedSourcesTextView;
         LiveData<Integer> outdatedSourceCount = this.homeViewModel.getOutdatedSourceCount();
-        outdatedSourceCount.observe(this, count ->
-                outdatedSourcesTextView.setText(resources.getQuantityString(R.plurals.outdated_source_label, count, count))
-        );
+        outdatedSourceCount.observe(this, count -> outdatedSourcesTextView
+                .setText(resources.getQuantityString(R.plurals.outdated_source_label, count, count)));
     }
 
     private void bindPending() {
@@ -229,6 +228,7 @@ public class HomeActivity extends AppCompatActivity {
         this.binding.content.logCardView.setOnClickListener(this::startDnsLogActivity);
         this.binding.content.helpCardView.setOnClickListener(this::startHelpActivity);
         this.binding.content.supportCardView.setOnClickListener(this::showSupportActivity);
+        this.binding.content.resetStatisticsButton.setOnClickListener(v -> resetStatistics());
     }
 
     private void setUpBottomDrawer() {
@@ -249,8 +249,8 @@ public class HomeActivity extends AppCompatActivity {
             this.drawerBehavior.setState(STATE_HALF_EXPANDED);
             this.onBackPressedCallback.setEnabled(true);
         });
-//        this.binding.bar.setNavigationIcon(R.drawable.ic_menu_24dp);
-//        this.binding.bar.replaceMenu(R.menu.next_actions);
+        // this.binding.bar.setNavigationIcon(R.drawable.ic_menu_24dp);
+        // this.binding.bar.replaceMenu(R.menu.next_actions);
     }
 
     private void bindFab() {
@@ -331,6 +331,43 @@ public class HomeActivity extends AppCompatActivity {
      */
     private void startDnsLogActivity(View view) {
         startActivity(new Intent(this, LogActivity.class));
+    }
+
+    /**
+     * Bind statistics LiveData to UI.
+     */
+    private void bindStatistics() {
+        VpnStatistics vpnStatistics = VpnStatistics.getInstance(this);
+
+        // Total requests
+        vpnStatistics.getTotalRequestsLiveData().observe(this,
+                count -> this.binding.content.totalRequestsCountTextView.setText(String.format("%,d", count)));
+
+        // Blocked requests
+        vpnStatistics.getBlockedRequestsLiveData().observe(this,
+                count -> this.binding.content.blockedRequestsCountTextView.setText(String.format("%,d", count)));
+
+        // Block percentage
+        vpnStatistics.getBlockPercentageLiveData().observe(this,
+                percentage -> this.binding.content.blockPercentageTextView
+                        .setText(String.format("%.1f%%", percentage)));
+    }
+
+    /**
+     * Reset all statistics with confirmation dialog.
+     */
+    private void resetStatistics() {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.reset_statistics_confirm_title)
+                .setMessage(R.string.reset_statistics_confirm)
+                .setPositiveButton(R.string.button_yes, (dialog, id) -> {
+                    VpnStatistics vpnStatistics = VpnStatistics.getInstance(this);
+                    vpnStatistics.resetStatistics();
+                    dialog.dismiss();
+                })
+                .setNegativeButton(R.string.button_no, (dialog, id) -> dialog.dismiss())
+                .create()
+                .show();
     }
 
     private void notifyAdBlocked(boolean adBlocked) {

@@ -253,6 +253,19 @@
     <string name="vpn_notification_action_pause">Pause</string>
     <string name="vpn_notification_action_resume">Resume</string>
 
+    <!-- Statistics -->
+    <string name="statistics_title">Statistics</string>
+    <string name="total_requests">Total Requests</string>
+    <string name="blocked_requests">Blocked</string>
+    <string name="allowed_requests">Allowed</string>
+    <string name="redirected_requests">Redirected</string>
+    <string name="block_percentage">Block Rate</string>
+    <string name="reset_statistics">Reset Statistics</string>
+    <string name="reset_statistics_confirm_title">Reset Statistics?</string>
+    <string name="reset_statistics_confirm">All statistics will be reset to zero. Are you sure?</string>
+    <string name="vpn_notification_blocked">%d requests blocked</string>
+    <string name="statistics_card_description">VPN request statistics</string>
+
     <!-- Permission -->
     <string name="permission_group_api_label">AdAway permissions</string>
     <string name="permission_group_api_description">Allow to interact with AdAway</string>

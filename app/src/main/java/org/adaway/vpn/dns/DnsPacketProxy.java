@@ -20,6 +20,7 @@ import org.adaway.AdAwayApplication;
 import org.adaway.db.entity.HostEntry;
 import org.adaway.db.entity.ListType;
 import org.adaway.model.vpn.VpnModel;
+import org.adaway.model.vpn.VpnStatistics;
 import org.pcap4j.packet.IpPacket;
 import org.pcap4j.packet.IpSelector;
 import org.pcap4j.packet.IpV4Packet;
@@ -75,6 +76,7 @@ public class DnsPacketProxy {
     private final EventLoop eventLoop;
     private final DnsServerMapper dnsServerMapper;
     private VpnModel vpnModel;
+    private VpnStatistics vpnStatistics;
 
     public DnsPacketProxy(EventLoop eventLoop, DnsServerMapper dnsServerMapper) {
         this.eventLoop = eventLoop;
@@ -88,6 +90,7 @@ public class DnsPacketProxy {
      */
     public void initialize(Context context) {
         this.vpnModel = (VpnModel) ((AdAwayApplication) context.getApplicationContext()).getAdBlockModel();
+        this.vpnStatistics = VpnStatistics.getInstance(context);
     }
 
     /**
@@ -200,6 +203,10 @@ public class DnsPacketProxy {
         switch (entry.getType()) {
             case BLOCKED:
                 Timber.i("handleDnsRequest: DNS Name %s blocked!", dnsQueryName);
+                // Track blocked request statistics
+                if (this.vpnStatistics != null) {
+                    this.vpnStatistics.incrementBlockedRequests();
+                }
                 dnsMsg.getHeader().setFlag(Flags.QR);
                 dnsMsg.getHeader().setRcode(Rcode.NOERROR);
                 dnsMsg.addRecord(NEGATIVE_CACHE_SOA_RECORD, Section.AUTHORITY);
@@ -207,11 +214,19 @@ public class DnsPacketProxy {
                 break;
             case ALLOWED:
                 Timber.i("handleDnsRequest: DNS Name %s allowed, sending to %s.", dnsQueryName, dnsAddress);
+                // Track allowed request statistics
+                if (this.vpnStatistics != null) {
+                    this.vpnStatistics.incrementAllowedRequests();
+                }
                 DatagramPacket outPacket = new DatagramPacket(dnsRawData, 0, dnsRawData.length, dnsAddress, packetPort);
                 this.eventLoop.forwardPacket(outPacket, data -> handleDnsResponse(ipPacket, data));
                 break;
             case REDIRECTED:
                 Timber.i("handleDnsRequest: DNS Name %s redirected to %s.", dnsQueryName, entry.getRedirection());
+                // Track redirected request statistics
+                if (this.vpnStatistics != null) {
+                    this.vpnStatistics.incrementRedirectedRequests();
+                }
                 dnsMsg.getHeader().setFlag(Flags.QR);
                 dnsMsg.getHeader().setFlag(Flags.AA);
                 dnsMsg.getHeader().unsetFlag(Flags.RD);

@@ -1,0 +1,10 @@
+package org.adaway.vpn;
+
+public class VpnService {
+    private final BroadcastReceiver statisticsUpdateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            notifyVpnStatus(Vpn Status.RUNNING);
+        }
+    };
+}
