@@ -265,6 +265,13 @@
     <string name="reset_statistics_confirm">All statistics will be reset to zero. Are you sure?</string>
     <string name="vpn_notification_blocked">%d requests blocked</string>
     <string name="statistics_card_description">VPN request statistics</string>
+    <string name="recent_blocked_label">Recently Blocked</string>
+    <string name="recent_allowed_label">Recently Allowed</string>
+    <string name="tap_to_view_full_log">Tap to view full log</string>
+    <string name="no_recent_logs">No recent activity</string>
+    <string name="pref_recent_logs_refresh_interval_key" translatable="false">recent_logs_refresh_interval</string>
+    <string name="pref_recent_logs_refresh_interval_title">Recent Logs Refresh Interval</string>
+    <string name="pref_recent_logs_refresh_interval_summary">How often to update recent blocked/allowed domains (seconds)</string>
 
     <!-- Permission -->
     <string name="permission_group_api_label">AdAway permissions</string>

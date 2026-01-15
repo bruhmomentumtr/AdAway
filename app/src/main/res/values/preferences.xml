@@ -67,4 +67,5 @@
     </string-array>
     <string name="pref_vpn_excluded_user_apps_key" translatable="false">excludeUserAppFromVpn</string>
     <string name="pref_vpn_excluded_user_apps_default" translatable="false" />
+    <integer name="pref_recent_logs_refresh_interval_def">10</integer>
 </resources>

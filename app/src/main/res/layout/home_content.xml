@@ -5,7 +5,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:paddingBottom="80dp"
+    android:clipToPadding="false">
 
 <androidx.constraintlayout.widget.ConstraintLayout
     android:layout_width="match_parent"
@@ -381,13 +383,74 @@
                     tools:text="22.9%" />
             </LinearLayout>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/resetStatisticsButton"
-                android:layout_width="wrap_content"
+            <!-- Recent Blocked -->
+            <TextView
+                android:id="@+id/recentBlockedLabel"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
                 android:layout_marginTop="16dp"
-                android:text="@string/reset_statistics" />
+                android:text="@string/recent_blocked_label"
+                android:textColor="@color/blocked"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/recentBlockedList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textSize="12sp"
+                tools:text="• ads.example.com\n• tracker.evil.net" />
+
+            <!-- Recent Allowed -->
+            <TextView
+                android:id="@+id/recentAllowedLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/recent_allowed_label"
+                android:textColor="@color/allowed"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/recentAllowedList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textSize="12sp"
+                tools:text="• google.com\n• github.com" />
+
+            <!-- Hint -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/tap_to_view_full_log"
+                android:textAlignment="center"
+                android:textSize="10sp"
+                android:textStyle="italic" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/refreshRecentLogsButton"
+                    style="@style/Widget.Material3.Button.Icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:text="Refresh"
+                    app:icon="@drawable/ic_sync_24dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/resetStatisticsButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reset_statistics" />
+            </LinearLayout>
 
         </LinearLayout>
     </androidx.cardview.widget.CardView>
@@ -498,171 +561,6 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/logCardView"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="34dp"
-        android:elevation="10dp"
-        app:cardCornerRadius="8dp"
-        app:contentPaddingBottom="16dp"
-        app:contentPaddingLeft="8dp"
-        app:contentPaddingRight="8dp"
-        app:contentPaddingTop="16dp"
-        app:layout_constraintBottom_toBottomOf="@+id/helpCardView"
-        app:layout_constraintEnd_toStartOf="@+id/badge1Space"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintHorizontal_weight="1"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/sourcesCardView">
-
-        <TextView
-            android:id="@+id/logTextView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="@string/log_label" />
-
-    </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:elevation="10dp"
-        android:shape="ring"
-        app:cardCornerRadius="75dp"
-        app:layout_constraintBottom_toTopOf="@+id/logCardView"
-        app:layout_constraintEnd_toEndOf="@+id/logCardView"
-        app:layout_constraintStart_toStartOf="@+id/logCardView"
-        app:layout_constraintTop_toTopOf="@+id/logCardView">
-
-        <ImageView
-            android:id="@+id/helpImageView"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_margin="5dp"
-            android:contentDescription="@string/log_label"
-            android:elevation="15dp"
-            app:srcCompat="@drawable/ic_outline_rule_24" />
-    </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/helpCardView"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="34dp"
-        android:elevation="10dp"
-        app:cardCornerRadius="8dp"
-        app:contentPaddingBottom="16dp"
-        app:contentPaddingLeft="8dp"
-        app:contentPaddingRight="8dp"
-        app:contentPaddingTop="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/guideline"
-        app:layout_constraintEnd_toStartOf="@+id/badge2Space"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintHorizontal_weight="1"
-        app:layout_constraintStart_toEndOf="@+id/badge1Space"
-        app:layout_constraintTop_toBottomOf="@+id/sourcesCardView"
-        app:layout_constraintVertical_bias="0.0">
-
-        <TextView
-            android:id="@+id/helpTextView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="@string/help_label" />
-
-    </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:elevation="10dp"
-        android:shape="ring"
-        app:cardCornerRadius="75dp"
-        app:layout_constraintBottom_toTopOf="@+id/helpCardView"
-        app:layout_constraintEnd_toEndOf="@+id/helpCardView"
-        app:layout_constraintStart_toStartOf="@+id/helpCardView"
-        app:layout_constraintTop_toTopOf="@+id/helpCardView">
-
-        <ImageView
-            android:id="@+id/projectImageView"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_margin="5dp"
-            android:contentDescription="@string/help_label"
-            android:elevation="15dp"
-            app:srcCompat="@drawable/ic_help_24dp" />
-    </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/supportCardView"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="34dp"
-        android:layout_marginEnd="16dp"
-        android:elevation="10dp"
-        app:cardCornerRadius="8dp"
-        app:contentPaddingBottom="16dp"
-        app:contentPaddingLeft="8dp"
-        app:contentPaddingRight="8dp"
-        app:contentPaddingTop="16dp"
-        app:layout_constraintBottom_toBottomOf="@+id/helpCardView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintHorizontal_weight="1"
-        app:layout_constraintStart_toEndOf="@+id/badge2Space"
-        app:layout_constraintTop_toBottomOf="@+id/sourcesCardView">
-
-        <TextView
-            android:id="@+id/supportTextView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="@string/support_label" />
-
-    </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:elevation="10dp"
-        android:shape="ring"
-        app:cardCornerRadius="75dp"
-        app:layout_constraintBottom_toTopOf="@+id/supportCardView"
-        app:layout_constraintEnd_toEndOf="@+id/supportCardView"
-        app:layout_constraintStart_toStartOf="@+id/supportCardView"
-        app:layout_constraintTop_toTopOf="@+id/supportCardView">
-
-        <ImageView
-            android:id="@+id/supportImageView"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_margin="5dp"
-            android:contentDescription="@string/support_label"
-            android:elevation="15dp"
-            app:srcCompat="@drawable/baseline_favorite_24" />
-    </androidx.cardview.widget.CardView>
-
-    <androidx.constraintlayout.widget.Barrier
-        android:id="@+id/barrier"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:barrierDirection="top"
-        app:layout_constraintTop_toBottomOf="@id/helpCardView"
-        tools:layout_editor_absoluteX="411dp" />
-
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_end="32dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 

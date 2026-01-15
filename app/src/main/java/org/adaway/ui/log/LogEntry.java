@@ -10,14 +10,14 @@ import org.adaway.db.entity.ListType;
  *
  * @author Bruce BUJON (bruce.bujon(at)gmail(dot)com)
  */
-class LogEntry implements Comparable<LogEntry> {
+public class LogEntry implements Comparable<LogEntry> {
     @NonNull
     private final String host;
 
     @Nullable
     private ListType type;
 
-    LogEntry(@NonNull String host, @Nullable ListType type) {
+    public LogEntry(@NonNull String host, @Nullable ListType type) {
         this.host = host;
         this.type = type;
     }
@@ -38,12 +38,15 @@ class LogEntry implements Comparable<LogEntry> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
 
         LogEntry that = (LogEntry) o;
 
-        if (!host.equals(that.host)) return false;
+        if (!host.equals(that.host))
+            return false;
         return type == that.type;
     }
 

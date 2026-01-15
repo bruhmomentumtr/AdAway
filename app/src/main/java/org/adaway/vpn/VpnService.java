@@ -58,6 +58,9 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import org.adaway.AdAwayApplication;
+import org.adaway.model.adblocking.AdBlockModel;
+
 import org.adaway.R;
 import org.adaway.broadcast.Command;
 import org.adaway.broadcast.CommandReceiver;
@@ -195,6 +198,18 @@ public class VpnService extends android.net.VpnService implements Handler.Callba
         Timber.d("Starting VPN service…");
         PreferenceHelper.setVpnServiceStatus(this, RUNNING);
         updateVpnStatus(STARTING);
+
+        // Auto-enable DNS logging (only if refresh interval > 0)
+        int refreshInterval = PreferenceHelper.getRecentLogsRefreshInterval(this);
+        AdBlockModel adBlockModel = ((AdAwayApplication) getApplication()).getAdBlockModel();
+        if (refreshInterval > 0 && !adBlockModel.isRecordingLogs()) {
+            adBlockModel.setRecordingLogs(true);
+            Timber.i("DNS logging auto-enabled (refresh interval: %d seconds).", refreshInterval);
+        } else if (refreshInterval == 0 && adBlockModel.isRecordingLogs()) {
+            adBlockModel.setRecordingLogs(false);
+            Timber.i("DNS logging disabled (refresh interval set to 0).");
+        }
+
         this.vpnWorker.start();
         Timber.i("VPN service started.");
     }

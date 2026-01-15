@@ -13,6 +13,13 @@
             app:key="@string/pref_vpn_watchdog_enabled_key"
             app:title="@string/pref_vpn_service_monitor"
             app:summary="@string/pref_vpn_service_monitor_description"/>
+
+        <androidx.preference.SeekBarPreference
+            app:key="@string/pref_recent_logs_refresh_interval_key"
+            app:title="@string/pref_recent_logs_refresh_interval_title"
+            app:summary="@string/pref_recent_logs_refresh_interval_summary"
+            app:defaultValue="@integer/pref_recent_logs_refresh_interval_def"
+            app:showSeekBarValue="true" />
     </PreferenceCategory>
 
     <!-- App bypass-->

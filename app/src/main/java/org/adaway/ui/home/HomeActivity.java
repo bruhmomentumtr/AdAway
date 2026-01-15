@@ -51,6 +51,17 @@ import org.adaway.ui.prefs.PrefsActivity;
 import org.adaway.ui.support.SupportActivity;
 import org.adaway.ui.update.UpdateActivity;
 import org.adaway.ui.welcome.WelcomeActivity;
+import org.adaway.AdAwayApplication;
+import org.adaway.db.AppDatabase;
+import org.adaway.db.dao.HostEntryDao;
+import org.adaway.db.entity.ListType;
+import org.adaway.model.adblocking.AdBlockModel;
+import org.adaway.ui.log.LogEntry;
+import org.adaway.util.AppExecutors;
+import android.os.Handler;
+import android.os.Looper;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import kotlin.jvm.functions.Function1;
 import timber.log.Timber;
@@ -64,13 +75,14 @@ public class HomeActivity extends AppCompatActivity {
     /**
      * The project link.
      */
-    private static final String PROJECT_LINK = "https://github.com/AdAway/AdAway";
+    private static final String PROJECT_LINK = "https://github.com/bruhmomentumtr/AdAway";
 
     private HomeActivityBinding binding;
     private BottomSheetBehavior<View> drawerBehavior;
     private OnBackPressedCallback onBackPressedCallback;
     private HomeViewModel homeViewModel;
     private ActivityResultLauncher<Intent> prepareVpnLauncher;
+    private Handler recentLogsHandler;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -90,6 +102,7 @@ public class HomeActivity extends AppCompatActivity {
         bindHostCounter();
         bindSourceCounter();
         bindStatistics();
+        bindRecentLogs();
         bindPending();
         bindState();
         bindClickListeners();
@@ -225,9 +238,11 @@ public class HomeActivity extends AppCompatActivity {
         this.binding.content.sourcesCardView.setOnClickListener(this::startHostsSourcesActivity);
         this.binding.content.checkForUpdateImageView.setOnClickListener(v -> this.homeViewModel.update());
         this.binding.content.updateImageView.setOnClickListener(v -> this.homeViewModel.sync());
-        this.binding.content.logCardView.setOnClickListener(this::startDnsLogActivity);
-        this.binding.content.helpCardView.setOnClickListener(this::startHelpActivity);
-        this.binding.content.supportCardView.setOnClickListener(this::showSupportActivity);
+        // İstatistik kartına tıklanınca LogActivity aç
+        this.binding.content.statisticsCardView.setOnClickListener(this::startDnsLogActivity);
+        // Refresh recent logs button
+        this.binding.content.refreshRecentLogsButton.setOnClickListener(v -> updateRecentLogLists());
+        // Reset statistics button
         this.binding.content.resetStatisticsButton.setOnClickListener(v -> resetStatistics());
     }
 
@@ -260,6 +275,10 @@ public class HomeActivity extends AppCompatActivity {
     private boolean showFragment(@IdRes int actionId) {
         if (actionId == R.id.drawer_preferences) {
             startPrefsActivity();
+            this.drawerBehavior.setState(STATE_HIDDEN);
+            return true;
+        } else if (actionId == R.id.drawer_help) {
+            startHelpActivity(null);
             this.drawerBehavior.setState(STATE_HIDDEN);
             return true;
         } else if (actionId == R.id.drawer_github_project) {
@@ -399,5 +418,96 @@ public class HomeActivity extends AppCompatActivity {
     private void showUpdate(View view) {
         Intent intent = new Intent(this, UpdateActivity.class);
         startActivity(intent);
+    }
+
+    /**
+     * Bind recent DNS logs to statistics card with periodic updates.
+     */
+    private void bindRecentLogs() {
+        int refreshInterval = PreferenceHelper.getRecentLogsRefreshInterval(this);
+        if (refreshInterval == 0) {
+            // Logging disabled, show message
+            binding.content.recentBlockedList.setText(R.string.no_recent_logs);
+            binding.content.recentAllowedList.setText(R.string.no_recent_logs);
+            return;
+        }
+
+        this.recentLogsHandler = new Handler(Looper.getMainLooper());
+        this.recentLogsHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                updateRecentLogLists();
+                int currentInterval = PreferenceHelper.getRecentLogsRefreshInterval(HomeActivity.this);
+                if (currentInterval > 0 && recentLogsHandler != null) {
+                    recentLogsHandler.postDelayed(this, currentInterval * 1000L);
+                }
+            }
+        }, 0);
+    }
+
+    /**
+     * Update recent blocked and allowed domain lists.
+     */
+    private void updateRecentLogLists() {
+        int refreshInterval = PreferenceHelper.getRecentLogsRefreshInterval(this);
+        if (refreshInterval == 0) {
+            binding.content.recentBlockedList.setText(R.string.no_recent_logs);
+            binding.content.recentAllowedList.setText(R.string.no_recent_logs);
+            return;
+        }
+
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            try {
+                AdBlockModel adBlockModel = ((AdAwayApplication) getApplication()).getAdBlockModel();
+                HostEntryDao hostEntryDao = AppDatabase.getInstance(this).hostEntryDao();
+
+                List<String> allLogs = adBlockModel.getLogs();
+                if (allLogs == null || allLogs.isEmpty()) {
+                    runOnUiThread(() -> {
+                        binding.content.recentBlockedList.setText(R.string.no_recent_logs);
+                        binding.content.recentAllowedList.setText(R.string.no_recent_logs);
+                    });
+                    return;
+                }
+
+                // Map to LogEntry with types (limit to last 50 for performance)
+                List<LogEntry> logEntries = allLogs.stream()
+                        .limit(50)
+                        .map(log -> new LogEntry(log, hostEntryDao.getTypeOfHost(log)))
+                        .collect(Collectors.toList());
+
+                // Filter blocked (recent 5)
+                String blockedText = logEntries.stream()
+                        .filter(e -> e.getType() == ListType.BLOCKED)
+                        .limit(5)
+                        .map(e -> "• " + e.getHost())
+                        .collect(Collectors.joining("\n"));
+
+                // Filter allowed (recent 5)
+                String allowedText = logEntries.stream()
+                        .filter(e -> e.getType() == ListType.ALLOWED || e.getType() == null)
+                        .limit(5)
+                        .map(e -> "• " + e.getHost())
+                        .collect(Collectors.joining("\n"));
+
+                // Update UI on main thread
+                runOnUiThread(() -> {
+                    binding.content.recentBlockedList.setText(
+                            blockedText.isEmpty() ? getString(R.string.no_recent_logs) : blockedText);
+                    binding.content.recentAllowedList.setText(
+                            allowedText.isEmpty() ? getString(R.string.no_recent_logs) : allowedText);
+                });
+            } catch (Exception e) {
+                Timber.e(e, "Error updating recent logs");
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (this.recentLogsHandler != null) {
+            this.recentLogsHandler.removeCallbacksAndMessages(null);
+        }
     }
 }

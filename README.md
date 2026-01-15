@@ -20,6 +20,16 @@ Complete overhaul of the build process for Windows developers:
 *   **Automatic Keystore Management:** The build system automatically generates a debug/release keystore if one doesn't exist, ensuring painless first-time builds.
 *   **Dependency Handling:** Integrated NDK and SDK checks.
 
+### 🎯 Enhanced UI/UX
+*   **Simplified Main Menu:** Removed redundant Log, Help, and Support cards for a cleaner interface.
+*   **Help in Drawer Menu:** Quick access to help via the hamburger menu.
+*   **One-Tap Statistics Access:** Tap the statistics card to instantly view full DNS logs.
+
+### ⚙️ Configurable Logging
+*   **Adjustable Refresh Interval:** Set recent logs update frequency (0-60 seconds) in VPN Settings.
+*   **Disable Logging:** Set interval to 0 to completely disable DNS logging (like original AdAway).
+*   **Manual Refresh:** Dedicated button to manually update recent logs on demand.
+
 ## 🚀 Planned Features
 *   **Advanced DNS Log UI:** Color-coded logs (Red for blocked, Green for allowed), search/filtering by domain, and sticky statistics header.
 

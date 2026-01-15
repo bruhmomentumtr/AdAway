@@ -180,12 +180,14 @@ elseif ($actualBuildType -eq "release" -and -not $SIGN_APK) {
 # 3. GRADLE BUILD
 # ---------------------------------------------------------
 if ($actualBuildType -eq "release") {
-    Write-Host "🔨 Release APK build başlatılıyor..." -ForegroundColor Cyan
-    & .\gradlew.bat assembleRelease
+    Write-Host "� Gradle sync & build başlatılıyor..."
+    Write-Host "� Release APK build başlatılıyor..." -ForegroundColor Cyan
+    & .\gradlew.bat assembleRelease --refresh-dependencies
 }
 else {
-    Write-Host "🔨 Debug APK build başlatılıyor..." -ForegroundColor Cyan
-    & .\gradlew.bat assembleDebug
+    Write-Host "� Gradle sync & build başlatılıyor..."
+    Write-Host "�� Debug APK build başlatılıyor..." -ForegroundColor Cyan
+    & .\gradlew.bat assembleDebug --refresh-dependencies
 }
 
 # ---------------------------------------------------------
