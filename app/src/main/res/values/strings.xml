@@ -265,6 +265,13 @@
     <string name="reset_statistics_confirm">All statistics will be reset to zero. Are you sure?</string>
     <string name="vpn_notification_blocked">%d requests blocked</string>
     <string name="statistics_card_description">VPN request statistics</string>
+
+    <string-array name="log_filter_options">
+        <item>All</item>
+        <item>Blocked</item>
+        <item>Allowed</item>
+    </string-array>
+    <string name="recent_logs">Recent Activity</string>
     <string name="recent_blocked_label">Recently Blocked</string>
     <string name="recent_allowed_label">Recently Allowed</string>
     <string name="tap_to_view_full_log">Tap to view full log</string>

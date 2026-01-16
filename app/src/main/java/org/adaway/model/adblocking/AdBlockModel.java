@@ -39,6 +39,11 @@ public abstract class AdBlockModel {
     private final MutableLiveData<String> state;
 
     /**
+     * The last log entry.
+     */
+    protected final MutableLiveData<String> lastLog;
+
+    /**
      * Constructor.
      *
      * @param context The application context.
@@ -47,6 +52,7 @@ public abstract class AdBlockModel {
         this.context = context;
         this.state = new MutableLiveData<>();
         this.applied = new MutableLiveData<>();
+        this.lastLog = new MutableLiveData<>();
     }
 
     /**
@@ -110,6 +116,15 @@ public abstract class AdBlockModel {
         String state = this.context.getString(stateResId, details);
         Timber.d(state);
         this.state.postValue(state);
+    }
+
+    /**
+     * Get the last log entry.
+     *
+     * @return The last log entry.
+     */
+    public LiveData<String> getLastLog() {
+        return this.lastLog;
     }
 
     /**

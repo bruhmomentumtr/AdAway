@@ -117,6 +117,7 @@ public class VpnModel extends AdBlockModel {
         // Add host to logs
         if (this.recordingLogs) {
             this.logs.add(host);
+            this.lastLog.postValue(host);
         }
         // Check cache
         return this.blockCache.get(host);

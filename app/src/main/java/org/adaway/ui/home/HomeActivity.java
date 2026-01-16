@@ -60,6 +60,8 @@ import org.adaway.ui.log.LogEntry;
 import org.adaway.util.AppExecutors;
 import android.os.Handler;
 import android.os.Looper;
+import android.widget.AdapterView;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -82,7 +84,10 @@ public class HomeActivity extends AppCompatActivity {
     private OnBackPressedCallback onBackPressedCallback;
     private HomeViewModel homeViewModel;
     private ActivityResultLauncher<Intent> prepareVpnLauncher;
-    private Handler recentLogsHandler;
+
+    // Recent logs
+    private final LinkedList<LogEntry> recentLogs = new LinkedList<>();
+    private int currentFilterMode = 0; // 0=All, 1=Blocked, 2=Allowed
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -240,10 +245,32 @@ public class HomeActivity extends AppCompatActivity {
         this.binding.content.updateImageView.setOnClickListener(v -> this.homeViewModel.sync());
         // İstatistik kartına tıklanınca LogActivity aç
         this.binding.content.statisticsCardView.setOnClickListener(this::startDnsLogActivity);
-        // Refresh recent logs button
-        this.binding.content.refreshRecentLogsButton.setOnClickListener(v -> updateRecentLogLists());
+
+        // Refresh recent logs button (Manual refresh)
+        this.binding.content.refreshRecentLogsButton.setOnClickListener(v -> {
+            // Re-fetch everything if needed, or just clear/reset
+            // For now, let's make it verify the current list
+            updateLogDisplay();
+        });
+
         // Reset statistics button
         this.binding.content.resetStatisticsButton.setOnClickListener(v -> resetStatistics());
+
+        // Navigation
+        this.binding.content.statisticsCardView.setOnClickListener(this::startDnsLogActivity);
+
+        // Filter Spinner
+        this.binding.content.logsFilterSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                currentFilterMode = position;
+                updateLogDisplay();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
     }
 
     private void setUpBottomDrawer() {
@@ -423,91 +450,79 @@ public class HomeActivity extends AppCompatActivity {
     /**
      * Bind recent DNS logs to statistics card with periodic updates.
      */
+    /**
+     * Bind recent DNS logs to statistics card with real-time updates.
+     */
     private void bindRecentLogs() {
-        int refreshInterval = PreferenceHelper.getRecentLogsRefreshInterval(this);
-        if (refreshInterval == 0) {
-            // Logging disabled, show message
-            binding.content.recentBlockedList.setText(R.string.no_recent_logs);
-            binding.content.recentAllowedList.setText(R.string.no_recent_logs);
-            return;
-        }
+        AdBlockModel adBlockModel = ((AdAwayApplication) getApplication()).getAdBlockModel();
 
-        this.recentLogsHandler = new Handler(Looper.getMainLooper());
-        this.recentLogsHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                updateRecentLogLists();
-                int currentInterval = PreferenceHelper.getRecentLogsRefreshInterval(HomeActivity.this);
-                if (currentInterval > 0 && recentLogsHandler != null) {
-                    recentLogsHandler.postDelayed(this, currentInterval * 1000L);
-                }
+        // Observe last log entry for real-time updates
+        adBlockModel.getLastLog().observe(this, host -> {
+            if (host != null) {
+                addLogEntry(host);
             }
-        }, 0);
+        });
     }
 
     /**
-     * Update recent blocked and allowed domain lists.
+     * Add a process a new log entry.
      */
-    private void updateRecentLogLists() {
-        int refreshInterval = PreferenceHelper.getRecentLogsRefreshInterval(this);
-        if (refreshInterval == 0) {
-            binding.content.recentBlockedList.setText(R.string.no_recent_logs);
-            binding.content.recentAllowedList.setText(R.string.no_recent_logs);
+    private void addLogEntry(String host) {
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            try {
+                HostEntryDao hostEntryDao = AppDatabase.getInstance(this).hostEntryDao();
+                ListType type = hostEntryDao.getTypeOfHost(host);
+
+                LogEntry entry = new LogEntry(host, type);
+
+                runOnUiThread(() -> {
+                    // Add to beginning
+                    recentLogs.addFirst(entry);
+                    // Keep max 50
+                    if (recentLogs.size() > 50) {
+                        recentLogs.removeLast();
+                    }
+                    updateLogDisplay();
+                });
+            } catch (Exception e) {
+                Timber.e(e, "Error processing log entry");
+            }
+        });
+    }
+
+    /**
+     * Update recent logs display based on filter.
+     */
+    private void updateLogDisplay() {
+        // Filter list
+        List<LogEntry> filteredList = recentLogs.stream()
+                .filter(entry -> {
+                    if (currentFilterMode == 1)
+                        return entry.getType() == ListType.BLOCKED; // Blocked
+                    if (currentFilterMode == 2)
+                        return entry.getType() == ListType.ALLOWED || entry.getType() == null; // Allowed
+                    return true; // All
+                })
+                .limit(5)
+                .collect(Collectors.toList());
+
+        if (filteredList.isEmpty()) {
+            binding.content.recentLogsList.setText(R.string.no_recent_logs);
             return;
         }
 
-        AppExecutors.getInstance().diskIO().execute(() -> {
-            try {
-                AdBlockModel adBlockModel = ((AdAwayApplication) getApplication()).getAdBlockModel();
-                HostEntryDao hostEntryDao = AppDatabase.getInstance(this).hostEntryDao();
+        String logText = filteredList.stream()
+                .map(e -> {
+                    String prefix = (e.getType() == ListType.BLOCKED) ? "🚫 " : "✅ ";
+                    return prefix + e.getHost();
+                })
+                .collect(Collectors.joining("\n"));
 
-                List<String> allLogs = adBlockModel.getLogs();
-                if (allLogs == null || allLogs.isEmpty()) {
-                    runOnUiThread(() -> {
-                        binding.content.recentBlockedList.setText(R.string.no_recent_logs);
-                        binding.content.recentAllowedList.setText(R.string.no_recent_logs);
-                    });
-                    return;
-                }
-
-                // Map to LogEntry with types (limit to last 50 for performance)
-                List<LogEntry> logEntries = allLogs.stream()
-                        .limit(50)
-                        .map(log -> new LogEntry(log, hostEntryDao.getTypeOfHost(log)))
-                        .collect(Collectors.toList());
-
-                // Filter blocked (recent 5)
-                String blockedText = logEntries.stream()
-                        .filter(e -> e.getType() == ListType.BLOCKED)
-                        .limit(5)
-                        .map(e -> "• " + e.getHost())
-                        .collect(Collectors.joining("\n"));
-
-                // Filter allowed (recent 5)
-                String allowedText = logEntries.stream()
-                        .filter(e -> e.getType() == ListType.ALLOWED || e.getType() == null)
-                        .limit(5)
-                        .map(e -> "• " + e.getHost())
-                        .collect(Collectors.joining("\n"));
-
-                // Update UI on main thread
-                runOnUiThread(() -> {
-                    binding.content.recentBlockedList.setText(
-                            blockedText.isEmpty() ? getString(R.string.no_recent_logs) : blockedText);
-                    binding.content.recentAllowedList.setText(
-                            allowedText.isEmpty() ? getString(R.string.no_recent_logs) : allowedText);
-                });
-            } catch (Exception e) {
-                Timber.e(e, "Error updating recent logs");
-            }
-        });
+        binding.content.recentLogsList.setText(logText);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (this.recentLogsHandler != null) {
-            this.recentLogsHandler.removeCallbacksAndMessages(null);
-        }
     }
 }
